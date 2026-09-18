@@ -1,5 +1,6 @@
+import { hostname } from 'node:os';
 import { resolve } from 'node:path';
-import { DEFAULT_SERVER_PORT, SERVER_TICK_RATE } from '@godspeed/shared';
+import { DEFAULT_BLOXITY_GAME_SLUG, DEFAULT_SERVER_PORT, SERVER_TICK_RATE } from '@godspeed/shared';
 
 /** Runtime server configuration, overridable by environment variables. */
 export interface ServerConfig {
@@ -8,8 +9,24 @@ export interface ServerConfig {
   readonly tickRate: number;
   /** Milliseconds between state patches sent to clients. */
   readonly patchRateMs: number;
-  /** Directory holding persisted player profiles. */
+  /**
+   * Directory holding the JSON dev store (`profiles.json`, `grants.json`),
+   * and the legacy `profiles.json` a Mongo deployment imports on boot.
+   */
   readonly dataDir: string;
+  /**
+   * The managed MongoDB Legion injects (`MONGODB_URI`), or '' to use the JSON
+   * file in `dataDir`. Set on every Bloxity pod; unset on a laptop.
+   */
+  readonly mongoUri: string;
+  /**
+   * The game's slug on Bloxity: what a token is verified AGAINST. Legion
+   * injects `BLOXITY_GAME_ID`; a local server falls back to the registered
+   * slug.
+   */
+  readonly gameSlug: string;
+  /** This process, for grant leases and logs. Legion injects `POD_NAME`. */
+  readonly podName: string;
   /**
    * Shared secret for the Bloxity fulfilment webhook, or '' to accept any.
    *
@@ -47,5 +64,8 @@ export const serverConfig: ServerConfig = {
   // Relative to the server package, which is the working directory for both
   // `npm run dev` and `npm start`, so a restart finds the same file either way.
   dataDir: resolve(process.env['GODSPEED_DATA_DIR'] ?? 'data'),
+  mongoUri: (process.env['MONGODB_URI'] ?? '').trim(),
+  gameSlug: (process.env['BLOXITY_GAME_ID'] ?? '').trim() || DEFAULT_BLOXITY_GAME_SLUG,
+  podName: (process.env['POD_NAME'] ?? '').trim() || `${hostname()}:${process.pid}`,
   buxWebhookSecret: process.env['BLOXITY_WEBHOOK_SECRET'] ?? '',
 };

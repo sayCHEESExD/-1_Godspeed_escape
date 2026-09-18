@@ -95,3 +95,32 @@ export interface SetIdentityMessage {
   displayName: string;
   avatarUrl: string;
 }
+
+/**
+ * Client -> server: the portal's game TOKEN, or null when signed out
+ * (MessageType.SetAuth). Sent at join (as a join option) and again whenever
+ * the login changes. The server verifies it with Bloxity; nothing in it is
+ * trusted until Bloxity has answered.
+ */
+export interface SetAuthMessage {
+  token: string | null;
+}
+
+/** Whose progress a session is playing on. */
+export type AuthStatus =
+  /** A verified Bloxity account. Progress follows the account. */
+  | 'account'
+  /** No token, or a token Bloxity rejected. Progress follows the browser. */
+  | 'guest'
+  /**
+   * A token Bloxity could not be asked about (timeout, outage). Playing as a
+   * guest for now; the server re-asks on a backoff and switches when it can.
+   */
+  | 'unavailable';
+
+/** Server -> client (MessageType.AuthState): the outcome of a SetAuth. */
+export interface AuthStateMessage {
+  status: AuthStatus;
+  /** Why a requested switch did not happen, when it did not. */
+  note?: string;
+}

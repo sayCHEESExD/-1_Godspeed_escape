@@ -56,17 +56,15 @@ COPY --from=build /app/shared/dist ./shared/dist
 COPY --from=build /app/server/package.json ./server/package.json
 COPY --from=build /app/server/dist ./server/dist
 
-# Profiles are a JSON file, and a container filesystem does not survive a
-# redeploy. Mount a volume here and every player's progression survives a
-# release - see `GODSPEED_DATA_DIR` in the README.
+# WHERE PROGRESS LIVES. On Bloxity Legion every pod is injected with
+# `MONGODB_URI` - an isolated managed database per game and channel - and the
+# server keeps every profile and every purchase there, one document per key.
+# Progress survives restarts, scale-to-zero and deploys; nothing on the pod's
+# own disk matters.
 #
-# ON BLOXITY LEGION THIS IS NOT ENOUGH, and the declaration below is honest
-# about what it can promise: `VOLUME` asks the Docker CLI for an anonymous
-# volume and asks Kubernetes for NOTHING. Legion runs pods that scale to zero
-# when the last player leaves, so /data goes with them. Legion injects
-# `MONGODB_URI` - an isolated database per game+channel - for exactly this
-# case, and until a `PersistenceAdapter` reads it, progression there lasts only
-# as long as a pod does.
+# /data is the JSON DEV STORE, used only when `MONGODB_URI` is unset (a
+# laptop, the verification scripts). A `profiles.json` left here beside a
+# Mongo deployment is imported on boot, insert-only, then ignored.
 ENV GODSPEED_DATA_DIR=/data
 VOLUME ["/data"]
 
@@ -83,6 +81,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||2575)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Straight to node, with no npm wrapper: npm swallows signals, so a container
-# stopped by the host would not run the shutdown handler that flushes profiles
-# to disk.
+# stopped by the host would not run the shutdown handler that drains the room
+# and waits for the last saves to land in the database.
 CMD ["node", "server/dist/index.js"]

@@ -213,7 +213,8 @@ export class Game {
       onStageAwarded: (message) => this.onStageAwarded(message),
     });
 
-    this.network.setIdentityProvider(() => this.bloxity.getUser()?._id ?? null);
+    // The TOKEN, never the account id: the server asks Bloxity whose it is.
+    this.network.setTokenProvider(() => this.bloxity.getToken());
     this.network.setLookProvider(() =>
       lookFromLegion(this.bloxity.getEquipped(), this.bloxity.getProportions()),
     );
@@ -221,6 +222,9 @@ export class Game {
       identityFromLegion(this.bloxity.getUser(), this.bloxity.getGuest()),
     );
     this.bloxity.onUserChanged((user) => {
+      // A login change switches the LIVE session's profile server-side: the
+      // token first, so the server can verify it, then the name to show.
+      this.network.sendAuth(this.bloxity.getToken());
       this.network.sendIdentity(identityFromLegion(user, this.bloxity.getGuest()));
     });
 

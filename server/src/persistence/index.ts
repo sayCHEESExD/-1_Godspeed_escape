@@ -1,15 +1,30 @@
 import { serverConfig } from '../config/serverConfig.js';
-import { JsonFilePersistence } from './JsonFilePersistence.js';
-import type { PersistenceAdapter } from './PersistenceAdapter.js';
+import { logger } from '../util/logger.js';
+import { JsonStorage } from './JsonStorage.js';
+import { MongoStorage } from './MongoStorage.js';
+import type { ProfileStorage } from './Storage.js';
 
-export type { PersistenceAdapter, StoredProfile } from './PersistenceAdapter.js';
+export type { ProfileStorage, StoredGrant } from './Storage.js';
+export type { MigrationFields, ProfileFields, ProgressFields, StoredProfile } from './StoredProfile.js';
+export { coerceProfile, emptyProgress, hasProgress, progressOf } from './StoredProfile.js';
 
 /**
- * The ONLY place a concrete adapter is named.
+ * THE ONE PLACE a concrete store is chosen.
  *
- * Swapping the shipped JSON file for a database is a change to this function
- * and to nothing else - everything above the boundary holds a
- * `PersistenceAdapter` and knows no more than that.
+ * `MONGODB_URI` set (every Legion pod) -> MongoDB, the database in the URI.
+ * Unset (a laptop, the verification scripts) -> the JSON files in the data
+ * directory. Everything above this boundary holds a `ProfileStorage` and
+ * knows no more than that.
  */
-export const createPersistence = (): PersistenceAdapter =>
-  new JsonFilePersistence(serverConfig.dataDir);
+const create = (): ProfileStorage => {
+  if (serverConfig.mongoUri) return new MongoStorage(serverConfig.mongoUri, serverConfig.dataDir);
+  logger.info('persistence', `MONGODB_URI is not set: using the JSON store in ${serverConfig.dataDir}`);
+  return new JsonStorage(serverConfig.dataDir);
+};
+
+export const storage: ProfileStorage = create();
+
+/** The exit path's last resort, for the JSON store only; Mongo writes are awaited in shutdown. */
+export const flushStorageSync = (): void => {
+  if (storage instanceof JsonStorage) storage.flushSync();
+};

@@ -59,16 +59,48 @@ written out in the workflow; no repository variables are needed.
 One-time after the first push: make the GHCR package `godspeed-escape-server` public
 (repository → Packages → Package settings → Change visibility) so Legion can pull it.
 
-Player profiles are a JSON file under `GODSPEED_DATA_DIR`. Legion pods scale to zero and keep no
-disk, so progression on Bloxity lasts only as long as a pod does until persistence is moved to the
-`MONGODB_URI` Legion injects.
+## Player progress
+
+Progress is **per account** for signed-in Bloxity players and **per browser** for guests.
+
+- **Storage.** With `MONGODB_URI` set (every Legion pod: an isolated managed database per game
+  and channel), profiles live in MongoDB, one document per player, written per key with
+  idempotent upserts so several pods can share the database. Without it (a laptop, the
+  verification scripts) profiles live in `GODSPEED_DATA_DIR/profiles.json`, written atomically.
+  A `profiles.json` found beside a Mongo deployment is imported on boot, insert-only.
+  Progress therefore survives restarts, idle scale-to-zero and deploys.
+- **Who you are.** The client sends the portal's game **token** (never an account id) at join
+  and whenever the login changes. The server asks Bloxity
+  (`POST https://api.bloxity.io/v1/auth/game-token/verify` with `{ gameSlug }`) and keys the
+  profile `bloxity:<accountId>` only for a 2xx carrying a valid `_id`. A rejected token plays as
+  a guest; an unreachable Bloxity plays as a guest for now and is re-asked on a backoff.
+  Guest profiles are keyed by the browser's own id; a browser id carrying the `bloxity:` prefix
+  is refused.
+- **First login.** If the account has a profile it always wins. If it has none and this browser's
+  guest has real progress, that progress becomes the account's (insert-only, so two pods racing
+  create one profile), and the guest copy is retired: reset, marked `migratedTo`, its old
+  progress kept as `migratedSnapshot`. A retired guest is never migrated again.
+- **Sign-in / sign-out mid-session** switches the live session's profile: the profile being left
+  is saved from live state first, then the new one is loaded and the player is placed at spawn.
+  If storage cannot be reached the session stays on its current profile.
+- **Outages.** A join while storage is unreachable is refused (code 4105) and the client keeps
+  retrying; nobody is seated on an empty profile. Saves queue and land once storage is back.
+  `/health` keeps answering.
+- **Purchases.** The Bux webhook records each transaction durably (answering 200 only then, 503
+  if it cannot), keyed by transaction id so a retry pays once. Rooms claim grants atomically for
+  the verified account, add the Wins, save, and only then mark them applied.
+
+Verify all of it against the built server with `npm run verify:persistence` (JSON store always;
+MongoDB when a `mongod` binary or `MONGODB_URI` is available - the latter is **wiped**).
 
 ### Environment
 
 | Variable | Where | Meaning |
 | --- | --- | --- |
 | `PORT`, `HOST` | server | Listen address (default 2575 / 0.0.0.0). `--port N` overrides. |
-| `GODSPEED_DATA_DIR` | server | Profile storage directory (default `data/`). |
+| `MONGODB_URI` | server | Injected by Legion. When set, profiles and grants live in this MongoDB database. |
+| `GODSPEED_DATA_DIR` | server | The JSON store when `MONGODB_URI` is unset (default `data/`); a legacy `profiles.json` here is imported into Mongo on boot. |
+| `BLOXITY_GAME_ID` | server | Injected by Legion. The slug tokens are verified against (default `godspeed-escape`). |
 | `BLOXITY_WEBHOOK_SECRET` | server | Shared secret for the Bloxity fulfilment webhook. Set in production. |
 | `VITE_SERVER_URL` | client | Game server URL baked in at build time. |
 | `VITE_BLOXITY_GAME_ID` | client | Bloxity game id override. |

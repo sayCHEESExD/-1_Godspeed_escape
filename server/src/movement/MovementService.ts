@@ -64,6 +64,11 @@ export class MovementService {
     this.publish(player, sim);
   }
 
+  /** True while this session has a live simulation. */
+  has(sessionId: string): boolean {
+    return this.sims.has(sessionId);
+  }
+
   forget(sessionId: string): void {
     this.sims.delete(sessionId);
   }

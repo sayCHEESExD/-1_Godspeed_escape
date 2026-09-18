@@ -31,6 +31,19 @@ Do NOT use python from the Bash tool on this machine (Windows Store stub stalls)
 - Effects budget for remotes: `VISIBLE_REMOTE_PLAYERS` / `FULL_EFFECT_REMOTE_PLAYERS` in the client. Do not simulate full god-power particles for every remote.
 - Server is authoritative; the client predicts with `stepPlayer` and reconciles. Any change to `PlayerMotion` must be reflected in reconciliation (sprint energy is part of it).
 
+## Progress and identity (persistence rules)
+
+- **Storage is per key** (`server/src/persistence/`): `get / put / insertIfAbsent / loadAll / flush`, one document per player. `MONGODB_URI` set → `MongoStorage` (Legion's managed database, the db named in the URI, official `mongodb` driver, hoisted to the root `node_modules`). Unset → `JsonStorage` (`profiles.json` + `grants.json`, atomic temp+fsync+rename, leftover `.tmp` recovered, unparseable file MOVED ASIDE, never overwritten). Never write a whole-map snapshot to Mongo; `$set` only known fields, `$unset` only `displayName`/`avatarUrl`; unknown fields are preserved.
+- **A profile is read from storage at join time** (`onAuth`), never from the boot cache. The cache in `ProfileStore` is for leaderboards only. A failed read THROWS and the join is refused with code 4105; the client retries. Never seat a player on an empty profile.
+- **Identity = the portal token, verified with Bloxity** (`server/src/auth/BloxityAuth.ts`): `POST https://api.bloxity.io/v1/auth/game-token/verify`, `Authorization: Bearer <token>`, body `{ gameSlug }`. Host is a constant. Only a 2xx with a valid string `_id` verifies. Outcomes: verified / rejected (guest, cached 30 s) / unavailable (guest for now, re-verified on a backoff, never cached). Never trust a browser-supplied account id anywhere, including Bux fulfilment. Never verify the JWT locally (`JWT_SECRET` is the game's secret, not Bloxity's key).
+- **Keys**: account `bloxity:<accountId>` (`accountKeyFor`), guest = browser id. A browser id with the `bloxity:` prefix is refused (4104).
+- **First login**: account profile wins; else migrate real guest progress with `insertIfAbsent` (+`migratedFrom`), then retire the guest (`migratedTo`, `migratedAt`, `migratedSnapshot`, progress reset). Retired guests are never migrated again and are excluded from leaderboards. Use LIVE session state when signing in mid-session.
+- **Mid-session login change** is a `SetAuth` message on the live session (`CourseRoom.switchAuth`): hold autosaves, save the leaving profile (stay put if it cannot land), resolve the new one, re-run the join's service order, pay grants, place at spawn, save. Only the newest login counts; one arriving mid-switch is queued.
+- **Purchases**: the webhook records to storage (200 only once durable, 503 otherwise); rooms `claim` atomically (lease), add Wins, save, then `settle`. SKU values unchanged.
+- **Shutdown**: `gracefullyShutdown(false)`, then `profileStore.flush()` and `close()`.
+- **Boot never fails on Mongo being down**; `/health` keeps answering.
+- Test with `npm run verify:persistence` (not part of `verify`); it stubs ONLY the Bloxity verify URL via `node --import scripts/persistence/stub-bloxity.mjs`.
+
 ## Layout facts
 
 - Spawn faces +Z. Treadmills are on the player's RIGHT (−X), the three-row Speed Upgrade terraces on the LEFT (+X), the three leaderboards (Wins / Rebirths / Time) on the BACK wall behind the spawn (z ≈ -142, x -32/0/32), facing the course.
@@ -40,4 +53,5 @@ Do NOT use python from the Bash tool on this machine (Windows Store stub stalls)
 ## Verification before calling anything done
 
 `npm run typecheck && npm run verify && npm run build:client && npm run size:client`, then
-`npm run verify:capacity` against a running dev server.
+`npm run verify:capacity` against a running dev server, and `npm run verify:persistence` after
+any change to auth, persistence, the room's join/leave/switch paths or the webhook.

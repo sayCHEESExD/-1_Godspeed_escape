@@ -2,11 +2,13 @@ import {
   MessageType,
   ROOM_NAME,
   decodeShelf,
+  type AuthStateMessage,
   type BuyCharmMessage,
   type CharmMessage,
   type ClaimStageMessage,
   type MoveMessage,
   type RespawnMessage,
+  type SetAuthMessage,
   type SetAvatarMessage,
   type SetIdentityMessage,
   type SlotMessage,
@@ -33,6 +35,13 @@ const PLAYER_ID_KEY = 'godspeed.playerId';
 /** Backoff between join attempts, in milliseconds. A cold host takes a while. */
 const JOIN_BACKOFF_MS = [1000, 2000, 4000, 8000, 15000] as const;
 
+/**
+ * The server's "storage unavailable" refusal. Not a failure of THIS join but
+ * of the database behind it, so the retry does not give up: it keeps asking
+ * at the longest backoff until the server can read profiles again.
+ */
+const STORAGE_UNAVAILABLE = 4105;
+
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -58,6 +67,7 @@ export interface NetworkHandlers {
   onPlayerRemoved?(sessionId: string): void;
   onRespawn?(message: RespawnMessage): void;
   onStageAwarded?(message: StageAwardedMessage): void;
+  onAuthState?(message: AuthStateMessage): void;
 }
 
 /**
@@ -69,7 +79,10 @@ export class NetworkClient {
   private client: Client | null = null;
   private room: Room<NetCourseState> | null = null;
   private status: ConnectionStatus = 'idle';
-  private identity: (() => string | null) | null = null;
+  /** The portal's game token, asked for at join and on every login change. */
+  private token: (() => string | null) | null = null;
+  /** The last token the server was told about, so an unchanged one is not resent. */
+  private sentToken: string | null | undefined = undefined;
   private look: (() => SetAvatarMessage | null) | null = null;
   private identityOf: (() => SetIdentityMessage) | null = null;
 
@@ -89,8 +102,26 @@ export class NetworkClient {
     this.room?.send(MessageType.SetIdentity, message);
   }
 
-  setIdentityProvider(provider: () => string | null): void {
-    this.identity = provider;
+  /**
+   * Where the portal's TOKEN comes from. The token is the only thing about
+   * the login that is ever sent: the server asks Bloxity whose it is. An
+   * account id from the browser would be a claim, and claims are not trusted.
+   */
+  setTokenProvider(provider: () => string | null): void {
+    this.token = provider;
+  }
+
+  /**
+   * Tell the server the login changed (sign-in, sign-out, account switch).
+   * The live session switches profile; there is no reconnect. Deduped: an
+   * unchanged token is not resent.
+   */
+  sendAuth(token: string | null): void {
+    if (!this.room) return;
+    if (token === this.sentToken) return;
+    this.sentToken = token;
+    const message: SetAuthMessage = { token };
+    this.room.send(MessageType.SetAuth, message);
   }
 
   setDisplayProvider(provider: () => SetIdentityMessage): void {
@@ -129,34 +160,43 @@ export class NetworkClient {
     this.client ??= new Client(clientConfig.serverUrl);
     const playerId = resolvePlayerId();
     const attempts = JOIN_BACKOFF_MS.length + 1;
+    let joinedWith: string | null = null;
 
-    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    for (let attempt = 1; ; attempt += 1) {
+      const token = this.token?.() ?? null;
       try {
         this.room = await this.client.joinOrCreate<NetCourseState>(ROOM_NAME, {
           playerId,
-          bloxityId: this.identity?.() ?? undefined,
+          token,
           avatar: this.look?.() ?? undefined,
           identity: this.identityOf?.() ?? undefined,
         });
+        joinedWith = token;
         break;
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        logger.warn(SCOPE, `join attempt ${attempt}/${attempts} failed: ${detail}`);
-        if (attempt === attempts) {
+        const code = (error as { code?: unknown }).code;
+        const storageDown = code === STORAGE_UNAVAILABLE;
+        logger.warn(SCOPE, `join attempt ${attempt}${storageDown ? '' : `/${attempts}`} failed: ${detail}`);
+        if (!storageDown && attempt >= attempts) {
           this.setStatus('error', detail);
           throw error;
         }
-        this.setStatus('connecting', `attempt ${attempt + 1}/${attempts}`);
-        await sleep(JOIN_BACKOFF_MS[attempt - 1] ?? 0);
+        const wait = JOIN_BACKOFF_MS[Math.min(attempt, JOIN_BACKOFF_MS.length) - 1] ?? 0;
+        this.setStatus('connecting', storageDown ? 'the server is waiting for its database' : `attempt ${attempt + 1}/${attempts}`);
+        await sleep(wait);
       }
     }
 
     if (!this.room) throw new Error('join produced no room');
 
+    this.sentToken = joinedWith;
     this.bindRoom(this.room);
     this.setStatus('connected');
     logger.info(SCOPE, `joined roomId=${this.room.roomId} sessionId=${this.room.sessionId}`);
     this.handlers.onSelfJoined?.(this.room.sessionId);
+    // A login that changed while the join was in flight is sent now.
+    this.sendAuth(this.token?.() ?? null);
   }
 
   /** Report one simulated input. Deliberately NOT rate limited. */
@@ -237,6 +277,7 @@ export class NetworkClient {
   async disconnect(): Promise<void> {
     await this.room?.leave(true);
     this.room = null;
+    this.sentToken = undefined;
     this.setStatus('disconnected');
   }
 
@@ -264,6 +305,11 @@ export class NetworkClient {
 
     room.onMessage<StageAwardedMessage>(MessageType.StageAwarded, (message) => {
       this.handlers.onStageAwarded?.(message);
+    });
+
+    room.onMessage<AuthStateMessage>(MessageType.AuthState, (message) => {
+      logger.info(SCOPE, `playing as ${message.status}${message.note ? ` (${message.note})` : ''}`);
+      this.handlers.onAuthState?.(message);
     });
 
     room.onError((code, message) => {

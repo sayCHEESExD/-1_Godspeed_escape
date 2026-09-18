@@ -47,6 +47,9 @@ export class LeaderboardService {
     const byHandle = new Map<string, Candidate>();
 
     for (const [id, profile] of profileStore.entries()) {
+      // A guest profile whose progress moved into an account ranks as the
+      // account now, not twice.
+      if (profile.migratedTo) continue;
       const handle = handleFor(id);
       byHandle.set(handle, {
         handle,

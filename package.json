@@ -27,7 +27,8 @@
     "verify:course": "npm run build:shared && node scripts/verify-course.mjs",
     "verify:progression": "npm run build:server && node scripts/verify-progression.mjs",
     "verify": "npm run verify:course && npm run verify:progression && npm run verify:assets",
-    "verify:capacity": "node scripts/verify-capacity.mjs"
+    "verify:capacity": "node scripts/verify-capacity.mjs",
+    "verify:persistence": "npm run build:server && node scripts/verify-persistence.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

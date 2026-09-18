@@ -88,6 +88,14 @@ export const MessageType = {
   SetAvatar: 'setAvatar',
   /** Client -> server: the player's Bloxity DISPLAY NAME and portrait. */
   SetIdentity: 'setIdentity',
+  /**
+   * Client -> server: the portal's game TOKEN, or null when signed out. Sent
+   * whenever the login changes mid-session. Never an account id: the server
+   * asks Bloxity who the token belongs to.
+   */
+  SetAuth: 'setAuth',
+  /** Server -> client: whose progress this session is now playing on. */
+  AuthState: 'authState',
 } as const;
 
 export type MessageType = (typeof MessageType)[keyof typeof MessageType];

@@ -12,6 +12,7 @@ export * from './config/charms.js';
 export * from './config/course.js';
 export * from './config/movement.js';
 export * from './config/progression.js';
+export * from './config/accounts.js';
 export * from './config/handles.js';
 export * from './config/rebirth.js';
 export * from './config/sprint.js';

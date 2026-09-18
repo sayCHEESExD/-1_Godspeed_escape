@@ -5,8 +5,9 @@ import {
   type ServerResponse,
 } from 'node:http';
 import { matchMaker } from '@colyseus/core';
-import { ROOM_NAME } from '@godspeed/shared';
+import { ROOM_NAME, isValidAccountId } from '@godspeed/shared';
 import { serverConfig } from './config/serverConfig.js';
+import { storage } from './persistence/index.js';
 import { buxGrants } from './progression/BuxGrants.js';
 import { logger } from './util/logger.js';
 
@@ -80,9 +81,10 @@ export const BUX_WEBHOOK_PATH = '/bloxity/bux';
  *
  * `verify:capacity` asserts exactly that against a running server.
  *
- * The query is asked of the matchmaker rather than counted here: the
- * matchmaker is the thing that knows, and a second tally kept alongside it
- * would be a second thing to get wrong.
+ * It ANSWERS EVEN WHEN THE DATABASE IS DOWN. Legion restarts a pod whose
+ * probe fails, and a restart does not bring a database back; what it does is
+ * drop every player who was mid-run. The outage is reported in the body and
+ * in the log, and joins fail cleanly in the room instead.
  */
 const handleHealth = async (response: ServerResponse): Promise<void> => {
   let rooms = 0;
@@ -98,7 +100,7 @@ const handleHealth = async (response: ServerResponse): Promise<void> => {
   }
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
-  response.end(JSON.stringify({ ok: true, room: ROOM_NAME, rooms, players }));
+  response.end(JSON.stringify({ ok: true, room: ROOM_NAME, rooms, players, storage: storage.kind }));
 };
 
 /**
@@ -108,15 +110,18 @@ const handleHealth = async (response: ServerResponse): Promise<void> => {
  * `requestPurchase` result is a receipt it can show; it is not a grant, and
  * nothing in the client is trusted to say a payment happened.
  *
- * ANSWERING 2xx IS THE CONTRACT. Bloxity refunds a purchase whose webhook did
- * not succeed, so this replies 200 for anything it has safely recorded -
- * including a SKU this build does not recognise, which is far more likely to
- * be a catalogue that moved ahead of a deploy than an attack, and which a
- * refund would turn into a purchase the player made and lost.
+ * ANSWERING 2xx IS THE CONTRACT, and it is answered only once the grant is
+ * DURABLY RECORDED. Bloxity refunds a purchase whose webhook did not succeed,
+ * so this replies 200 for anything it has safely stored - including a SKU
+ * this build does not recognise, which is far more likely to be a catalogue
+ * that moved ahead of a deploy than an attack, and which a refund would turn
+ * into a purchase the player made and lost. A retried webhook for a known
+ * transaction is a 200 too, and pays out nothing more.
  *
- * It replies 401 only when a configured secret does not match, and 400 only
- * when the body is not something that can be recorded at all. Both are cases
- * where a refund is the correct outcome.
+ * It replies 401 only when a configured secret does not match, 400 only when
+ * the body is not something that can be recorded at all, and 503 when the
+ * database cannot take the record - the one case where Bloxity SHOULD retry,
+ * and will.
  */
 const handleBuxWebhook = async (
   request: IncomingMessage,
@@ -146,11 +151,21 @@ const handleBuxWebhook = async (
     reply(400, { ok: false, error: 'malformed payload' });
     return;
   }
+  if (!isValidAccountId(body.userId) || typeof body.transactionId !== 'string' || body.transactionId.length > 128) {
+    logger.warn(SCOPE, 'rejected a webhook with a malformed user or transaction id');
+    reply(400, { ok: false, error: 'malformed payload' });
+    return;
+  }
 
-  buxGrants.record(body.userId, body.transactionId, body.sku);
-  logger.info(
-    SCOPE,
-    `accepted ${body.sku} for ${body.username ?? body.userId} [${body.transactionId}]`,
-  );
-  reply(200, { ok: true, transactionId: body.transactionId });
+  try {
+    const outcome = await buxGrants.record(body.userId, body.transactionId, body.sku);
+    logger.info(
+      SCOPE,
+      `${outcome} ${body.sku} for ${body.username ?? body.userId} [${body.transactionId}]`,
+    );
+    reply(200, { ok: true, transactionId: body.transactionId, duplicate: outcome === 'duplicate' });
+  } catch (error) {
+    logger.error(SCOPE, `could not record ${body.transactionId}; asking Bloxity to retry:`, error);
+    reply(503, { ok: false, error: 'storage unavailable' });
+  }
 };
