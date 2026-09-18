@@ -29,12 +29,12 @@ const FACE_SHARE = 0.56;
  * How far the plate's CENTRE floats above the top of the player's head.
  *
  * The plate is HEIGHT tall, so its bottom edge clears the head by
- * CLEARANCE - HEIGHT / 2: three quarters of a unit here, a clear gap of air
+ * CLEARANCE - HEIGHT / 2: a unit and a half here, a clear gap of air
  * between the hair and the portrait. Wings, tall hats and antennae from the
  * portal all stand over a bare skull, so the gap is generous on purpose: a
  * name tangled in somebody's accessories is worse than a name slightly high.
  */
-const CLEARANCE = 1.5;
+const CLEARANCE = 2.25;
 
 /**
  * THE NAME AND FACE OVER A PLAYER'S HEAD.

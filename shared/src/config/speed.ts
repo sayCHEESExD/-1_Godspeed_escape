@@ -1,6 +1,6 @@
 import { auraMultiplier } from './auras.js';
 import { charmBonuses } from './charms.js';
-import { rebirthMultiplier, MAX_LEVEL } from './rebirth.js';
+import { rebirthMultiplier } from './rebirth.js';
 import { trailBonus } from './trails.js';
 import { upgradeForSlot } from './upgrades.js';
 
@@ -107,7 +107,7 @@ export const LEVEL_CURVE = {
  * and the level it is attached to can never be a fraction apart.
  */
 export const speedForNextLevel = (level: number): number => {
-  const step = Math.max(1, Math.min(Math.floor(level), MAX_LEVEL));
+  const step = Math.max(1, Math.floor(level));
   const fast = Math.min(step - 1, LEVEL_CURVE.taperFrom - 1);
   const slow = Math.max(0, step - LEVEL_CURVE.taperFrom);
   return Math.round(
@@ -116,24 +116,31 @@ export const speedForNextLevel = (level: number): number => {
 };
 
 /**
- * Cumulative Speed needed to have REACHED each level, built once.
+ * Cumulative Speed needed to have REACHED each level, GROWN ON DEMAND.
  *
- * `CUMULATIVE[L]` is the total to reach level L; level 1 costs nothing. Two
- * hundred entries, so a level lookup is a binary search rather than a loop
- * per HUD update.
+ * `CUMULATIVE[L]` is the total to reach level L; level 1 costs nothing. There
+ * is NO LEVEL CAP, so the table is extended as far as any lookup needs and no
+ * further: a level lookup is a binary search over what has been built. The
+ * curve is exponential, so a cost that stops being a finite number is where
+ * the table stops - thousands of levels past anything a player can reach.
  */
-const CUMULATIVE: readonly number[] = (() => {
-  const table = [0, 0];
-  for (let level = 1; level < MAX_LEVEL; level += 1) {
-    table.push((table[level] as number) + speedForNextLevel(level));
+const CUMULATIVE: number[] = [0, 0];
+
+/** Make sure the table reaches `level`, or the end of finite numbers. */
+const extendTo = (level: number): void => {
+  while (CUMULATIVE.length <= level) {
+    const last = CUMULATIVE.length - 1;
+    const next = (CUMULATIVE[last] as number) + speedForNextLevel(last);
+    if (!Number.isFinite(next)) return;
+    CUMULATIVE.push(next);
   }
-  return table;
-})();
+};
 
 /** Cumulative Speed needed to have REACHED `level`. Level 1 costs nothing. */
 export const totalSpeedToReach = (level: number): number => {
-  const target = Math.max(1, Math.min(Math.floor(level), MAX_LEVEL));
-  return CUMULATIVE[target] ?? 0;
+  const target = Math.max(1, Math.floor(level));
+  extendTo(target);
+  return CUMULATIVE[Math.min(target, CUMULATIVE.length - 1)] ?? 0;
 };
 
 /** Where a lifetime Speed total sits on the level curve. */
@@ -146,30 +153,27 @@ export interface LevelProgress {
   readonly required: number;
   /** 0..1 fill for the level bar. */
   readonly fraction: number;
-  /** True when the level cap has been reached and the bar is full. */
-  readonly capped: boolean;
 }
 
 /** Resolve a lifetime Speed total into a level and a bar position. */
-export const resolveLevel = (totalSpeed: number, levelCap: number = MAX_LEVEL): LevelProgress => {
-  const cap = Math.max(1, Math.min(Math.floor(levelCap), MAX_LEVEL));
+export const resolveLevel = (totalSpeed: number): LevelProgress => {
   const total = Number.isFinite(totalSpeed) ? Math.max(0, totalSpeed) : 0;
 
-  // Binary search the cumulative table for the highest level whose cost is
-  // covered.
+  // Grow the table until it reaches past this total, then binary search it
+  // for the highest level whose cost is covered.
+  while ((CUMULATIVE[CUMULATIVE.length - 1] as number) <= total) {
+    const before = CUMULATIVE.length;
+    extendTo(before + 64);
+    if (CUMULATIVE.length === before) break;
+  }
   let low = 1;
-  let high = cap;
+  let high = CUMULATIVE.length - 1;
   while (low < high) {
     const mid = (low + high + 1) >> 1;
     if ((CUMULATIVE[mid] as number) <= total) low = mid;
     else high = mid - 1;
   }
   const level = low;
-
-  if (level >= cap) {
-    const required = speedForNextLevel(cap);
-    return { level: cap, into: required, required, fraction: 1, capped: true };
-  }
 
   const required = speedForNextLevel(level);
   const into = total - (CUMULATIVE[level] as number);
@@ -178,7 +182,6 @@ export const resolveLevel = (totalSpeed: number, levelCap: number = MAX_LEVEL): 
     into,
     required,
     fraction: required > 0 ? Math.min(Math.max(into / required, 0), 1) : 0,
-    capped: false,
   };
 };
 

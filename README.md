@@ -111,10 +111,10 @@ MongoDB when a `mongod` binary or `MONGODB_URI` is available - the latter is **w
 **Speed** is earned per step: on the ground, on a treadmill (the belt moves, you do not), and
 while sprinting. Each step pays `(upgrade + trail bonus) × rebirth × aura × charms`.
 
-**Levels** follow a smooth curve up to level 200 (level 10 needs 245 Speed, 11 needs 264, 12 needs 284).
+**Levels** follow a smooth curve with no cap (level 10 needs 245 Speed, 11 needs 264, 12 needs 284).
 
 **Rebirth** resets level and Speed for a permanent multiplier: 1.5x, 2x, then +0.5x each.
-Available at level 15, 45, 75, 110, 150 and 200. Unlocks and cosmetics are kept.
+Available at level 15, 45, 75, 110, 150 and 200, then 60 levels higher each time. Unlocks and cosmetics are kept.
 
 **Wins** come from the course. Each of the 12 stages has a win pad paying 1, 3, 10, 30, 100, 300,
 1,000, 3,000, 10,000, 30,000, 100,000 and 500,000 Wins, then returns you to spawn. Falling

@@ -1,5 +1,4 @@
 import {
-  MAX_LEVEL,
   canRebirth,
   rebirthMultiplier,
   rebirthRequiredLevel,
@@ -116,8 +115,8 @@ export class RebirthPanel extends Panel {
 
     this.beforeSpeed.textContent = `Speed x${rebirthMultiplier(this.rebirths).toFixed(1)}`;
     this.afterSpeed.textContent = `Speed x${rebirthMultiplier(this.rebirths + 1).toFixed(1)}`;
-    this.beforeLevel.textContent = `Max Level ${MAX_LEVEL}`;
-    this.afterLevel.textContent = `Max Level ${MAX_LEVEL}`;
+    this.beforeLevel.textContent = `Rebirth at Lv ${required}`;
+    this.afterLevel.textContent = `Next at Lv ${rebirthRequiredLevel(this.rebirths + 1)}`;
 
     const shown = Math.min(this.level, required);
     this.barFill.style.width = `${Math.min(Math.max(shown / required, 0), 1) * 100}%`;

@@ -52,7 +52,7 @@ check(S.STAGES[0].startZ === S.COURSE.lobbyEndZ, 'stage 1 begins exactly where t
   }
   check(ordered, 'every stage starts where the last one ended, plus the bridge, at the same height');
   check(S.STAGES.every((s, i) => i === 0 || s.recommendedLevel > S.STAGES[i - 1].recommendedLevel), 'recommended levels climb');
-  check(S.STAGES[11].recommendedLevel <= S.MAX_LEVEL, 'no stage recommends a level past the cap');
+  check(Number.isFinite(S.STAGES[11].recommendedLevel) && S.STAGES[11].recommendedLevel > 0, 'the last stage recommends a real level');
   check(S.COURSE_TOP_Y > 60, `the course climbs to ${S.COURSE_TOP_Y.toFixed(0)} units: a vertical ascent`);
 }
 

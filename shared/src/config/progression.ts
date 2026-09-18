@@ -1,4 +1,4 @@
-import { MAX_LEVEL, maxLevelForRebirth, rebirthMultiplier } from './rebirth.js';
+import { rebirthMultiplier } from './rebirth.js';
 
 /**
  * Progression tuning. Level, Speed, Wins, rebirths, upgrades, trails, auras and
@@ -15,7 +15,4 @@ import { MAX_LEVEL, maxLevelForRebirth, rebirthMultiplier } from './rebirth.js';
  */
 export const MAX_WINS = Number.MAX_SAFE_INTEGER;
 
-/** Level cap before any rebirth. Always the same cap. */
-export const BASE_LEVEL_CAP = MAX_LEVEL;
-
-export { maxLevelForRebirth, rebirthMultiplier };
+export { rebirthMultiplier };

@@ -71,8 +71,8 @@ export class SpeedHud {
   }
 
   /** The replicated progression. */
-  updateProgress(totalSpeed: number, levelCap: number, speedPerStep: number): void {
-    const progress = resolveLevel(totalSpeed, levelCap);
+  updateProgress(totalSpeed: number, speedPerStep: number): void {
+    const progress = resolveLevel(totalSpeed);
     if (totalSpeed !== this.lastTotal) {
       this.lastTotal = totalSpeed;
       this.speedValue.textContent = `${formatSpeed(totalSpeed)} Speed`;
@@ -122,10 +122,9 @@ export class SpeedHud {
   }
 
   private renderLevel(progress: LevelProgress): void {
-    this.levelFill.style.width = `${(progress.capped ? 1 : progress.fraction) * 100}%`;
-    this.levelLabel.textContent = progress.capped
-      ? 'MAX'
-      : `${formatSpeed(Math.floor(progress.into))}/${formatSpeed(progress.required)}`;
+    // There is no level cap: the bar always shows the way to the next level.
+    this.levelFill.style.width = `${progress.fraction * 100}%`;
+    this.levelLabel.textContent = `${formatSpeed(Math.floor(progress.into))}/${formatSpeed(progress.required)}`;
   }
 }
 

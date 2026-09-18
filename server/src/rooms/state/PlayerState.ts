@@ -4,7 +4,6 @@ import {
   PlayerAnimationState,
   INITIAL_OWNED_TRAILS,
   INITIAL_OWNED_UPGRADES,
-  MAX_LEVEL,
   SPAWN_POSITION,
   SPAWN_ROTATION_Y,
   SPRINT,
@@ -95,9 +94,6 @@ export class PlayerState extends Schema {
   /** Authoritative movement multiplier and jump velocity. */
   @type('float32') moveMultiplier = 1;
   @type('float32') jumpVelocity = 26;
-
-  /** Level cap. Always the same cap, replicated so the HUD need not know. */
-  @type('uint32') maxLevel = MAX_LEVEL;
 
   /** Highest stage (1-based) ever banked. */
   @type('uint32') bestStage = 0;

@@ -460,7 +460,7 @@ export class Game {
       });
     }
 
-    this.hud.updateProgress(state.totalSpeed, state.maxLevel, state.speedPerStep);
+    this.hud.updateProgress(state.totalSpeed, state.speedPerStep);
     this.pops.observe(state.totalSpeed);
     this.wins.update(state.wins);
     this.run.setInventory(state.ownedUpgrades, state.wins);

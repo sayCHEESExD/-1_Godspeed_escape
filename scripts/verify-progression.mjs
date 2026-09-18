@@ -45,7 +45,7 @@ check(S.speedForNextLevel(10) === 245, 'level 10 requires 245');
 check(S.speedForNextLevel(11) === 264, 'level 11 requires 264');
 check(S.speedForNextLevel(12) === 284, 'level 12 requires 284');
 check(S.speedForNextLevel(21) === 544, 'level 21 requires 544 (the reference bar)');
-check(S.MAX_LEVEL === 200, 'the level cap is 200');
+check(S.MAX_LEVEL === undefined, 'there is no level cap');
 {
   let monotonic = true;
   for (let level = 2; level <= 200; level += 1) {
@@ -56,7 +56,10 @@ check(S.MAX_LEVEL === 200, 'the level cap is 200');
   check(top > 1e7 && top < 1e9, `reaching level 200 needs ${S.formatSpeed(top)} Speed: meaningful, not absurd`);
   check(S.resolveLevel(0).level === 1, 'zero Speed is level 1');
   check(S.resolveLevel(S.totalSpeedToReach(15)).level === 15, 'the cumulative table and the resolver agree at 15');
-  check(S.resolveLevel(1e12).level === 200 && S.resolveLevel(1e12).capped, 'a huge total caps at 200');
+  const huge = S.resolveLevel(1e12);
+  check(huge.level > 200 && S.resolveLevel(S.totalSpeedToReach(huge.level)).level === huge.level, `a huge total keeps levelling past 200 (1T Speed is level ${huge.level})`);
+  check(S.resolveLevel(S.totalSpeedToReach(500)).level === 500 && S.speedForNextLevel(500) > S.speedForNextLevel(499), 'level 500 exists and costs more than 499');
+  check(Number.isFinite(S.resolveLevel(Number.MAX_VALUE).level), 'an absurd total resolves to a finite level rather than hanging');
 }
 
 // --------------------------------------------------------------- rebirths
@@ -64,10 +67,10 @@ console.log('rebirth');
 check(S.rebirthRequiredLevel(0) === 15, 'the first rebirth needs level 15');
 check(S.rebirthRequiredLevel(1) >= 40 && S.rebirthRequiredLevel(1) <= 50, 'the second needs 40-50');
 check(S.rebirthRequiredLevel(2) >= 75, 'the third needs 75+');
-check(S.rebirthRequiredLevel(9) === 200, 'later rebirths settle at the cap');
+check(S.rebirthRequiredLevel(5) === 200 && S.rebirthRequiredLevel(6) === 260 && S.rebirthRequiredLevel(9) === 440, 'later rebirths keep climbing: 200, 260, ... 440');
 check(same([0, 1, 2, 3, 4].map(S.rebirthMultiplier), [1, 1.5, 2, 2.5, 3]), 'multipliers 1, 1.5, 2, 2.5, 3');
 check(S.canRebirth(15, 0) && !S.canRebirth(14, 0), 'eligible at 15, not at 14');
-check(S.maxLevelForRebirth(0) === 200 && S.maxLevelForRebirth(5) === 200, 'the cap never moves');
+check(S.maxLevelForRebirth === undefined, 'no cap function survives');
 
 // --------------------------------------------------------------- upgrades
 console.log('speed upgrades');
@@ -144,7 +147,7 @@ const speeds = new SpeedService();
 const player = new PlayerState();
 player.sessionId = 'probe';
 speeds.initialise(player);
-check(player.level === 1 && player.speedPerStep === 2 && player.maxLevel === 200, 'a fresh player: level 1, +2 per step, cap 200');
+check(player.level === 1 && player.speedPerStep === 2 && player.maxLevel === undefined, 'a fresh player: level 1, +2 per step, no cap');
 
 {
   // Strides on the ground pay; the first step after a placement does not.

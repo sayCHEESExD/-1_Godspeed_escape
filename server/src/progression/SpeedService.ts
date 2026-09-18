@@ -1,5 +1,4 @@
 import {
-  MAX_LEVEL,
   MAX_SIM_DELTA,
   SPEED,
   TREADMILLS,
@@ -51,7 +50,6 @@ export class SpeedService {
 
   initialise(player: PlayerState): void {
     player.level = 1;
-    player.maxLevel = MAX_LEVEL;
     this.syncDerived(player);
     this.reset(player.sessionId);
   }
@@ -142,8 +140,7 @@ export class SpeedService {
    * Used on join, on reconnect and whenever an inventory changes.
    */
   syncDerived(player: PlayerState): void {
-    player.maxLevel = MAX_LEVEL;
-    player.level = resolveLevel(player.totalSpeed, MAX_LEVEL).level;
+    player.level = resolveLevel(player.totalSpeed).level;
     player.speedPerStep = this.rateOf(player);
     player.sprintCapacity = charmBonuses(player.equippedCharms, player.ownedCharms).sprint;
 

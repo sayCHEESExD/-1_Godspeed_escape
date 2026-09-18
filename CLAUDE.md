@@ -25,7 +25,7 @@ Do NOT use python from the Bash tool on this machine (Windows Store stub stalls)
 - **Wins are SPENT on Speed Upgrades, Trails, Auras and Charms** (the unlock is a purchase: `wallet.spend`, after every other check has passed). The 15 upgrade thresholds in `shared/src/config/upgrades.ts` are exact from the spec (note +512 = 12,000,000 then +1K = 10,000,000: intentional, preserve).
 - **Speed (the progression number) is earned per STEP** (`SPEED.strideDistance`), not per second. Rate = `(upgrade.speedPerStep + trailBonus) × rebirth × aura × charms` via `speedPerStepFor`. Treadmills pay belt distance while the player stands still.
 - **No checkpoints.** Any death respawns at the main spawn. Every stage has exactly one cloud/storm/void sea under it (`seaFor` in `course.ts`); the sea kills, nothing else is a soft landing.
-- Level curve, rebirth levels `[15,45,75,110,150,200]`, and `MAX_LEVEL 200` are fixed; keep the anchors level 10 = 245, 11 = 264, 12 = 284.
+- **There is NO level cap.** The level table in `speed.ts` grows on demand. Rebirth levels `[15,45,75,110,150,200]`, then +60 per rebirth; keep the anchors level 10 = 245, 11 = 264, 12 = 284.
 - The course is pure data in `shared/src/config/course.ts`; the server and client both read it. After ANY course edit run `npm run verify:course` (walkability, gaps vs run reach, launch pads, hub layout, seas, bounds).
 - Charm shop: 3 random charms, restock every 5 minutes, server-side singleton (`CharmService.charmShop`), replicated as an encoded shelf string plus `restockIn`.
 - Effects budget for remotes: `VISIBLE_REMOTE_PLAYERS` / `FULL_EFFECT_REMOTE_PLAYERS` in the client. Do not simulate full god-power particles for every remote.

@@ -27,7 +27,6 @@ export interface NetPlayerState extends PlayerMotionState {
   speedPerStep: number;
   moveMultiplier: number;
   jumpVelocity: number;
-  maxLevel: number;
   bestStage: number;
   ownedTrails: number;
   trailSlot: number;

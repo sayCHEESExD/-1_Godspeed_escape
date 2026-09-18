@@ -65,7 +65,6 @@ export interface PlayerProgression {
   ownedUpgrades: number;
   moveMultiplier: number;
   jumpVelocity: number;
-  maxLevel: number;
   /** Speed granted per step, resolved by the one shared formula. */
   speedPerStep: number;
   bestStage: number;
