@@ -59,6 +59,11 @@ export class UpgradeService {
     if (now - (this.lastClaimAt.get(player.sessionId) ?? 0) < CLAIM_COOLDOWN_MS) {
       return { granted: false, tier, reason: 'cooldown' };
     }
+    // The tile is BOUGHT: its Wins leave the wallet. Last, so a refusal above
+    // never costs anything.
+    if (!wallet.spend(player, tier.winsRequired)) {
+      return { granted: false, tier, reason: 'too-few-wins' };
+    }
 
     player.ownedUpgrades |= upgradeBit(tier.slot);
     this.lastClaimAt.set(player.sessionId, now);

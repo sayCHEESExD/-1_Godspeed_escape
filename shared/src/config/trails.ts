@@ -29,7 +29,7 @@ export interface TrailTier {
   readonly name: string;
   /** Speed ADDED per step while worn. */
   readonly bonus: number;
-  /** Wins the player must HOLD to unlock it. Never spent. */
+  /** Wins the unlock COSTS. Spent from the wallet when it is bought. */
   readonly winsRequired: number;
   /** Base colour, as a hex integer. */
   readonly color: number;

@@ -121,14 +121,14 @@ Available at level 15, 45, 75, 110, 150 and 200. Unlocks and cosmetics are kept.
 respawns at spawn with no checkpoints.
 
 **Speed Upgrades** (15 tiers, +1 to +16K per step) are unlocked by holding enough Wins on the
-terraces left of spawn. Wins are never spent on them. Each tier has its own god-power effect that
+terraces left of spawn. The Wins are spent on the unlock. Each tier has its own god-power effect that
 shows mainly while sprinting.
 
 **Sprint** (hold Q) boosts speed while a visible energy bar drains. Release to refill quickly.
 Running the bar dry locks sprint until it recovers.
 
-**Backpack**: Trails (19 tiers, flat Speed bonus, Wins gates), Auras (6 tiers, 1.5x to 25x
-multipliers, Wins gates) and Charms (bought with Wins in the Charm Shop, which restocks
+**Backpack**: Trails (19 tiers, flat Speed bonus, bought with Wins), Auras (6 tiers, 1.5x to 25x
+multipliers, bought with Wins) and Charms (bought with Wins in the Charm Shop, which restocks
 3 random charms every 5 minutes).
 
 ## Project layout

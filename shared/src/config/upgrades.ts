@@ -2,10 +2,8 @@
  * THE SPEED UPGRADES: the fifteen tiles in the spawn hub.
  *
  * Each one is PERMANENT and sets how much Speed a step is worth. They are
- * unlocked by REACHING a Wins total - a gate, not a purchase: the tile says
- * "10 Wins required", and a player who has ten Wins walks onto it and owns it
- * for ever, Wins intact. That is what the reference art's tiles say and it is
- * how the +1 games play.
+ * BOUGHT with Wins: the tile says "10 Wins", and a player who holds ten Wins
+ * walks onto it, pays them, and owns the tier for ever.
  *
  * The values are EXACTLY as specified, including the deliberately unusual
  * step where +512 requires more than +1K. `verify:progression` asserts them.
@@ -60,7 +58,7 @@ export interface SpeedUpgrade {
   readonly name: string;
   /** Speed granted per step while this is the equipped tier. */
   readonly speedPerStep: number;
-  /** Wins the player must HOLD to unlock it. Never spent. */
+  /** Wins the unlock COSTS. Spent from the wallet when it is bought. */
   readonly winsRequired: number;
   readonly power: GodPower;
 }

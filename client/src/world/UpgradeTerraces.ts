@@ -99,7 +99,7 @@ export class UpgradeTerraces {
 
       // The sign: "Speed +N" in gold, and the requirement under it. Faces the
       // spawn, which is -X from the terraces.
-      const requirement = tier.winsRequired === 0 ? 'FREE' : `${formatWins(tier.winsRequired)} Wins required`;
+      const requirement = tier.winsRequired === 0 ? 'FREE' : `${formatWins(tier.winsRequired)} Wins`;
       const sign = new CanvasSign(9, 3.6, [
         { text: `Speed +${formatStep(tier.speedPerStep)}`, size: 1, fill: '#ffe08a', stroke: '#2a1a05', strokeWidth: 0.16 },
         {

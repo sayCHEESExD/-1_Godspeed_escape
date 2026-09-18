@@ -15,7 +15,7 @@ export interface AuraTier {
   readonly name: string;
   /** Multiplier on Speed per step while worn. */
   readonly multiplier: number;
-  /** Wins the player must HOLD to unlock it. Never spent. */
+  /** Wins the unlock COSTS. Spent from the wallet when it is bought. */
   readonly winsRequired: number;
   readonly color: number;
   readonly style: AuraStyle;

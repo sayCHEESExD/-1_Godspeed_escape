@@ -187,7 +187,7 @@ check(player.level === 1 && player.speedPerStep === 2 && player.maxLevel === 200
   check(upgrades.claim(player, 2, speeds).reason === 'not-on-tile', 'tile +2 refused when not standing on it');
   tile(2);
   const claim = upgrades.claim(player, 2, speeds);
-  check(claim.granted && player.upgradeSlot === 2 && player.wins === 1, 'tile +2 unlocked with 1 Win, and the Win is KEPT');
+  check(claim.granted && player.upgradeSlot === 2 && player.wins === 0, 'tile +2 unlocked with 1 Win, and the Win is SPENT');
   check(player.speedPerStep === 3, 'the rate is now +2 tile + +1 trail = 3');
   check(upgrades.claim(player, 2, speeds).reason === 'already-owned', 'a second claim is refused');
   check(upgrades.claim(player, 99, speeds).reason === 'unknown-slot', 'an unknown slot is refused');
@@ -211,7 +211,7 @@ check(player.level === 1 && player.speedPerStep === 2 && player.maxLevel === 200
   player.wins = 2;
   check(trails.unlock(player, 2, speeds).reason === 'too-few-wins', 'trail +2 refused with 2 Wins');
   player.wins = 3;
-  check(trails.unlock(player, 2, speeds).ok && player.trailSlot === 2 && player.wins === 3, 'trail +2 unlocked with 3 Wins, Wins kept');
+  check(trails.unlock(player, 2, speeds).ok && player.trailSlot === 2 && player.wins === 0, 'trail +2 unlocked with 3 Wins, and they are spent');
   check(trails.equip(player, 5, speeds).reason === 'not-owned', 'wearing an unowned trail is refused');
   check(trails.equip(player, 0, speeds).ok && player.trailSlot === 0, 'a trail can be taken off');
   check(trails.equip(player, 1, speeds).ok && player.trailSlot === 1, 'the free trail can be worn again');
@@ -224,7 +224,7 @@ check(player.level === 1 && player.speedPerStep === 2 && player.maxLevel === 200
   player.wins = 999;
   check(auras.unlock(player, 1, speeds).reason === 'too-few-wins', 'aura 1 refused with 999 Wins');
   player.wins = 1_000;
-  check(auras.unlock(player, 1, speeds).ok && player.auraSlot === 1, 'aura 1 unlocked with 1,000 Wins');
+  check(auras.unlock(player, 1, speeds).ok && player.auraSlot === 1 && player.wins === 0, 'aura 1 unlocked with 1,000 Wins, and they are spent');
   check(player.speedPerStep === S.speedPerStepFor({
     upgradeSlot: player.upgradeSlot, trailSlot: player.trailSlot, ownedTrails: player.ownedTrails,
     auraSlot: 1, ownedAuras: player.ownedAuras, equippedCharms: 0, ownedCharms: 0, rebirths: 0,

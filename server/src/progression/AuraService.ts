@@ -39,6 +39,8 @@ export class AuraService {
     if (now - (this.lastUnlockAt.get(player.sessionId) ?? 0) < UNLOCK_COOLDOWN_MS) {
       return { ok: false, reason: 'cooldown' };
     }
+    // BOUGHT: the Wins leave the wallet. Last, so a refusal above costs nothing.
+    if (!wallet.spend(player, tier.winsRequired)) return { ok: false, reason: 'too-few-wins' };
 
     this.lastUnlockAt.set(player.sessionId, now);
     player.ownedAuras |= auraMask(tier.slot);

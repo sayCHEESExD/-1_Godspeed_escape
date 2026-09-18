@@ -22,7 +22,7 @@ Do NOT use python from the Bash tool on this machine (Windows Store stub stalls)
 - Ports: server **2575**, Vite **5181**, preview 4181. Room name `godspeedescape`, Bloxity slug `godspeed-escape`.
 - **Client build must stay under 12 MB.** No world image files: world textures are canvas-drawn (`client/src/world/WorldTextures.ts`). Only `assets/` (audio, UI icons, player model) ship as files; `scripts/verify-assets.mjs` pins their digests.
 - **Sprint is HOLD Q only** (touch: hold the SPRINT button). No toggle. Energy drains while held, regens only after release (`shared/src/config/sprint.ts`, `PlayerSim.applySprint`).
-- **Wins are a GATE for Speed Upgrades, Trails and Auras** (held, never spent). Only **charms spend Wins**. The 15 upgrade thresholds in `shared/src/config/upgrades.ts` are exact from the spec (note +512 = 12,000,000 then +1K = 10,000,000: intentional, preserve).
+- **Wins are SPENT on Speed Upgrades, Trails, Auras and Charms** (the unlock is a purchase: `wallet.spend`, after every other check has passed). The 15 upgrade thresholds in `shared/src/config/upgrades.ts` are exact from the spec (note +512 = 12,000,000 then +1K = 10,000,000: intentional, preserve).
 - **Speed (the progression number) is earned per STEP** (`SPEED.strideDistance`), not per second. Rate = `(upgrade.speedPerStep + trailBonus) × rebirth × aura × charms` via `speedPerStepFor`. Treadmills pay belt distance while the player stands still.
 - **No checkpoints.** Any death respawns at the main spawn. Every stage has exactly one cloud/storm/void sea under it (`seaFor` in `course.ts`); the sea kills, nothing else is a soft landing.
 - Level curve, rebirth levels `[15,45,75,110,150,200]`, and `MAX_LEVEL 200` are fixed; keep the anchors level 10 = 245, 11 = 264, 12 = 284.

@@ -159,7 +159,7 @@ export const injectHudStyles = (): void => {
 body.aoe-touch-mode .aoe-tile__key { display: none; }
 .aoe-tile__badge {
   position: absolute;
-  right: -9px;
+  left: -9px;
   top: -9px;
   width: 22px;
   height: 22px;
@@ -174,7 +174,6 @@ body.aoe-touch-mode .aoe-tile__key { display: none; }
   50% { transform: scale(1.18); }
 }
 .aoe-tile--ready .aoe-tile__badge { display: block; }
-.aoe-tile--ready .aoe-tile__key { display: none; }
 .aoe-tile--locked { filter: saturate(0.6) brightness(0.9); }
 .aoe-tile--rebirth { --tile-a: #ff5fb3; --tile-b: #c92a78; }
 .aoe-tile--shop { --tile-a: #ff5a5a; --tile-b: #c92a2a; }
