@@ -1,0 +1,39 @@
+{
+  "name": "godspeed-escape",
+  "version": "0.1.0",
+  "private": true,
+  "description": "+1 Godspeed Escape - browser multiplayer divine sprint obby (Three.js + Colyseus)",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace @godspeed/shared",
+    "dev": "npm run build:shared && concurrently -n server,client -c magenta,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm run dev --workspace @godspeed/server",
+    "dev:client": "npm run dev --workspace @godspeed/client",
+    "build": "npm run build:shared && npm run build --workspace @godspeed/server && npm run build --workspace @godspeed/client",
+    "build:client": "npm run build:shared && npm run build --workspace @godspeed/client",
+    "build:server": "npm run build:shared && npm run build --workspace @godspeed/server",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "start": "npm run start --workspace @godspeed/server",
+    "verify:assets": "node scripts/verify-assets.mjs",
+    "size:client": "node scripts/build-size.mjs",
+    "verify:course": "npm run build:shared && node scripts/verify-course.mjs",
+    "verify:progression": "npm run build:server && node scripts/verify-progression.mjs",
+    "verify": "npm run verify:course && npm run verify:progression && npm run verify:assets",
+    "verify:capacity": "node scripts/verify-capacity.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "@colyseus/core": "0.16.24"
+  }
+}
