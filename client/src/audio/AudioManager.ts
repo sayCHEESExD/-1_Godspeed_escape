@@ -21,7 +21,7 @@ const SFX_GAIN = 0.34;
 const WALK_GAIN = 0.9;
 
 /*
- * FOUR SUPPLIED FILES, and everything else synthesised.
+ * FIVE SUPPLIED FILES, and everything else synthesised.
  *
  * The asset set for this game ships a background track, a jump, a fall and a
  * mech footstep, and those four are used as they are - a tune, a real impact
@@ -58,6 +58,8 @@ const MUSIC_URL = '/audio/Background.mp3';
 const SAMPLE_URLS: Partial<Record<SoundName, string>> = {
   jump: '/audio/jump.mp3',
   death: '/audio/death.mp3',
+  // The god power landing: the supplied lightning crack, on the sprint's edge.
+  sprint: '/audio/Lightning.mp3',
 };
 
 /**
@@ -102,8 +104,8 @@ export type SoundName =
   | 'level'
   | 'rebirth'
   | 'claim'
-  /** The god power landing: a rising whoosh on the sprint's edge. */
-  | 'sprint'
+  /** The god power landing: the lightning crack on the sprint's edge. */
+  | 'sprint'| 'sprint'
   /** A permanent unlock: an upgrade tile, a trail or an aura. */
   | 'unlock'
   /** A charm bought. */
@@ -518,8 +520,10 @@ export class AudioManager {
         this.arpeggio(now, [0, 5, 9], 0.06, 'square', 0.35);
         break;
       case 'sprint':
-        // THE GOD POWER: a fast rising sweep with a bright shimmer over it,
-        // so the bar going down is heard as well as seen.
+        // THE GOD POWER: the supplied lightning crack when Q lands, falling
+        // back to a fast rising sweep with a bright shimmer over it, so the
+        // bar going down is heard as well as seen.
+        if (this.playSample('sprint', now, 0.55)) break;
         this.blip(now, 'sawtooth', 160, 900, 0.28, 0.3);
         this.blip(now + 0.04, 'triangle', 600, 1800, 0.22, 0.18);
         break;

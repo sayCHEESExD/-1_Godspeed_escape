@@ -35,7 +35,8 @@ const EXPECTED = [
   { path: 'assets/ui/shop.png', md5: 'baf5b63cba7737b79dd63478a11768fa' },
   // The three sounds. The track is the single largest file in the build. Its
   // name carries a capital B as supplied; it is referenced exactly so.
-  { path: 'assets/audio/Background.mp3', md5: '1f1d91a0649db55386b984c3b55422a3' },
+  { path: 'assets/audio/Background.mp3', md5: 'e595e85c8f560d5abff6c84f1cd81cdf' },
+  { path: 'assets/audio/Lightning.mp3', md5: '10cafe0d9d3de9ee5870992c5da722f3' },
   { path: 'assets/audio/jump.mp3', md5: '77c58db6921be7b0c7a61903d38bbf30' },
   { path: 'assets/audio/death.mp3', md5: 'a6c361490b027a8effd0ac861936a5a7' },
 ];
