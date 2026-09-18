@@ -26,15 +26,15 @@ const MAX_WIDTH = 6;
 const FACE_SHARE = 0.56;
 
 /**
- * How far the plate floats above the top of the machine.
+ * How far the plate's CENTRE floats above the top of the player's head.
  *
- * Above the MECH's own height, which is its shoulders - and a rider sits in
- * the chest below them wearing whatever the portal has put on their head.
- * Wings, tall hats and antennae all stand well over a bare skull, so the
- * clearance is generous on purpose: a name tangled in somebody's accessories
- * is worse than a name slightly too high.
+ * The plate is HEIGHT tall, so its bottom edge clears the head by
+ * CLEARANCE - HEIGHT / 2: three quarters of a unit here, a clear gap of air
+ * between the hair and the portrait. Wings, tall hats and antennae from the
+ * portal all stand over a bare skull, so the gap is generous on purpose: a
+ * name tangled in somebody's accessories is worse than a name slightly high.
  */
-const CLEARANCE = 0.9;
+const CLEARANCE = 1.5;
 
 /**
  * THE NAME AND FACE OVER A PLAYER'S HEAD.

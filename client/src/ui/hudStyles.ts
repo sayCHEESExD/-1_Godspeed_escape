@@ -559,23 +559,32 @@ body.aoe-touch-mode .aoe-rail { --gs-rail: 64px; gap: 20px; }
   }
 }
 
-/* A PHONE ON ITS SIDE: the rail lies down along the top strip. */
+/*
+ * A PHONE ON ITS SIDE: the rail stays a column, snapped to the LEFT MIDDLE at
+ * a smaller tile size, and the level block sits at the BOTTOM CENTRE. The
+ * joystick moves right by the rail's width (see TouchControls) so the two
+ * never share the corner.
+ */
 @media (orientation: landscape) and (max-height: 500px) {
   body.aoe-touch-mode {
-    --aoe-stick-zone: calc(26px + env(safe-area-inset-left, 0px) + var(--aoe-stick-radius, 64px) * 2);
+    --aoe-rail-lane: 66px;
+    --aoe-stick-zone: calc(26px + env(safe-area-inset-left, 0px) + var(--aoe-rail-lane) + var(--aoe-stick-radius, 64px) * 2);
     --aoe-jump-zone: calc(24px + env(safe-area-inset-right, 0px) + var(--aoe-jump-size, 88px) * 2 + 16px);
   }
-  body.aoe-touch-mode .aoe-rail {
+  /* Both forms for specificity: the touch-mode rail rule above must lose here. */
+  body.aoe-touch-mode .aoe-rail,
+  body:not(.aoe-touch-mode) .aoe-rail {
     --gs-rail: 46px;
-    top: max(10px, env(safe-area-inset-top, 0px));
+    top: 50%;
     left: max(10px, env(safe-area-inset-left, 0px));
-    transform: none;
-    gap: 10px;
-    flex-wrap: wrap;
-    max-height: var(--gs-rail);
+    transform: translateY(-50%);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    max-height: none;
   }
-  body.aoe-touch-mode .aoe-tile__label { display: none; }
-  body.aoe-touch-mode .aoe-tile { border-radius: 12px; border-width: 3px; }
+  body .aoe-tile__label { display: none; }
+  body .aoe-tile { border-radius: 12px; border-width: 3px; }
   body.aoe-touch-mode .aoe-wins { top: max(6px, env(safe-area-inset-top, 0px)); }
   body.aoe-touch-mode .aoe-wins__icon { width: 26px; height: 26px; }
   body.aoe-touch-mode .aoe-wins__value { font-size: 19px; }
@@ -583,25 +592,19 @@ body.aoe-touch-mode .aoe-rail { --gs-rail: 64px; gap: 20px; }
   body.aoe-touch-mode .aoe-panel__box { max-height: 92vh; }
 }
 
-/* THE PORTAL'S CORNER, RESERVED. */
+/*
+ * THE PORTAL'S CORNER, RESERVED. The portal draws its own controls in the
+ * top-left; a rail centred on the left edge sits below them, so in landscape
+ * nothing has to move. In portrait the wins counter drops under the strip.
+ */
 body.aoe-portal-embedded { --aoe-portal-top: 58px; --aoe-portal-left: 248px; }
-@media (orientation: landscape) and (max-height: 449px) {
-  body.aoe-portal-embedded.aoe-touch-mode .aoe-rail { left: auto; right: max(10px, env(safe-area-inset-right, 0px)); top: 50px; flex-wrap: wrap; max-height: var(--gs-rail); }
-}
-@media (orientation: landscape) and (max-height: 449px) and (max-width: 560px) {
-  body.aoe-portal-embedded.aoe-touch-mode .aoe-rail { max-height: calc(var(--gs-rail) * 2 + 10px); }
-}
-@media (orientation: landscape) and (min-height: 450px) and (max-height: 500px) {
-  body.aoe-portal-embedded.aoe-touch-mode .aoe-rail { top: calc(var(--aoe-portal-top) + 12px); }
-}
 @media (max-width: 580px) {
   body.aoe-portal-embedded .aoe-wins { top: calc(var(--aoe-portal-top) + 6px); }
 }
-@media (orientation: landscape) and (min-height: 380px) and (max-height: 500px) {
-  body.aoe-touch-mode .aoe-rail { flex-wrap: nowrap; max-height: none; }
-}
-@media (orientation: landscape) and (max-height: 379px) and (max-width: 520px) {
-  body.aoe-touch-mode .aoe-rail { max-height: calc(var(--gs-rail) * 2 + 10px); }
+/* A VERY SHORT landscape (old phones): tighter still, so four tiles fit the height. */
+@media (orientation: landscape) and (max-height: 340px) {
+  body.aoe-touch-mode .aoe-rail,
+  body:not(.aoe-touch-mode) .aoe-rail { --gs-rail: 40px; gap: 6px; }
 }
 `;
   document.head.appendChild(style);

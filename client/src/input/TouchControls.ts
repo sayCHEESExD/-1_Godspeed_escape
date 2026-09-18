@@ -383,6 +383,18 @@ const injectStyles = (): void => {
 .aoe-touch__sprint--locked { filter: saturate(0.4) brightness(0.8); }
 .aoe-touch__jump.is-down,
 .aoe-touch__sprint.is-down { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+
+/*
+ * A phone on its side: the HUD rail stands down the left edge at its middle,
+ * so the stick's rest position moves right by the rail's lane. The rail is
+ * 46px of tile plus its margin; --aoe-rail-lane is set by the HUD stylesheet
+ * on the same media query, and falls back to the same figure here.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  .aoe-touch__stick {
+    left: calc(var(--aoe-safe-l, 0px) + 26px + var(--aoe-rail-lane, 66px) + var(--aoe-stick-radius));
+  }
+}
 `;
   document.head.append(style);
 };

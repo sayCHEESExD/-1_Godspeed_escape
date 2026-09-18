@@ -246,7 +246,8 @@ body.aoe-touch-mode .gs-hud { bottom: calc(2.4vh + 132px); width: min(480px, 86v
     width: min(380px, calc(100vw - var(--aoe-stick-zone, 150px) - var(--aoe-jump-zone, 240px) - 32px));
     gap: 3px;
   }
-  body.aoe-touch-mode .gs-hud__sprint { height: 26px; border-width: 3px; }
+  /* The bar fits its block, which is sized to the gap between stick and buttons. */
+  body.aoe-touch-mode .gs-hud__sprint { width: 100%; height: 26px; border-width: 3px; }
   body.aoe-touch-mode .gs-hud__sprint-label { font-size: 13px; }
   body.aoe-touch-mode .gs-hud__speed { font-size: 20px; }
   body.aoe-touch-mode .gs-hud__rate { display: none; }
